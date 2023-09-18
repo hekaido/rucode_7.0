@@ -39,8 +39,7 @@ def train_epoch(model, data_loader, loss_function, optimizer, device):
     preds = torch.cat(preds, dim=0)
     targets = torch.cat(targets, dim=0)
     acc = (targets == preds).sum() / preds.shape[0]
-    metrics = {"Train Loss": total_loss / dl_size, 
-               "Train Accuracy": acc.item()}
+    metrics = {"Train Loss": total_loss / dl_size, "Train Accuracy": acc.item()}
     return metrics
 
 
@@ -59,42 +58,38 @@ def eval_epoch(model, data_loader, loss_function, device):
         with torch.no_grad():
             logits = model(batch)
             preds.append(logits.argmax(dim=1))
-            targets.append(batch["label"])
+            targets.append(batch["labels"])
 
-        loss = loss_function(logits, batch["label"])
+        loss = loss_function(logits, batch["labels"])
         total_loss += loss.item()
 
     preds = torch.cat(preds, dim=0)
     targets = torch.cat(targets, dim=0)
     acc = (targets == preds).sum() / preds.shape[0]
-    metrics = {"Eval Loss": total_loss / dl_size,
-               "Eval Accuracy": acc.item()}
+    metrics = {"Eval Loss": total_loss / dl_size, "Eval Accuracy": acc.item()}
     return metrics
 
 
 def single_model(
     model,
-    dataset,
+    train_loader,
+    val_loader,
     loss_function,
-    collate_fn,
     optimizer,
-    device=torch.device("cuda"),
-    shuffle=True,
+    device=torch.device("cpu"),
     epochs: int = 8,
-    lr: float = 1e-3,
-    batch_size: int = 4096,
     start_epoch=0,
 ):
     loss_function.to(device)
     model.to(device)
-    data_loader = torch.utils.data.DataLoader(
-     
-        dataset, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_fn
-    )
     for epoch_i in range(0, epochs):
         if epoch_i >= start_epoch:
             train_metrics = train_epoch(
-                model, data_loader, loss_function, optimizer, device
+                model, train_loader, loss_function, optimizer, device
+            )
+            eval_metrics = eval_epoch(
+                model, val_loader, loss_function, device
             )
             print("EPOCH", epoch_i)
             print(train_metrics)
+            print(eval_metrics)
