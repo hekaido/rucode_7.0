@@ -1,4 +1,5 @@
 import random
+import copy
 
 import torch
 from tqdm.auto import tqdm
@@ -87,9 +88,40 @@ def single_model(
             train_metrics = train_epoch(
                 model, train_loader, loss_function, optimizer, device
             )
-            eval_metrics = eval_epoch(
-                model, val_loader, loss_function, device
-            )
+            eval_metrics = eval_epoch(model, val_loader, loss_function, device)
             print("EPOCH", epoch_i)
             print(train_metrics)
             print(eval_metrics)
+
+
+def train_model_early_stopping(
+    model,
+    train_loader,
+    val_loader,
+    loss_function,
+    optimizer,
+    device=torch.device("cpu"),
+    early_stopping: int = 2,
+):
+    loss_function.to(device)
+    model.to(device)
+    es = early_stopping
+    max_acc = 0
+    epoch = 0
+    while es > 0:
+        train_metrics = train_epoch(
+            model, train_loader, loss_function, optimizer, device
+        )
+        eval_metrics = eval_epoch(model, val_loader, loss_function, device)
+        print("EPOCH", epoch)
+        print(train_metrics)
+        print(eval_metrics)
+        acc = eval_metrics["Eval Accuracy"]
+        if acc > max_acc:
+            best_model = copy.deepcopy(model)
+            es = early_stopping
+            max_acc = acc
+        else:
+            es -= 1
+
+    return best_model

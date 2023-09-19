@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 
-from settings import MAX_WORD_LEN, vowels, char2id
+from settings import MAX_WORD_LEN, vowels, char2id, pair2id
 
 
 class TrainDataset(Dataset):
@@ -14,10 +14,7 @@ class TrainDataset(Dataset):
 
     def __getitem__(self, idx):
         word_len = len(self.item_list[idx])
-        return (
-            [0] * (MAX_WORD_LEN - word_len) + self.item_list[idx], 
-            self.labels[idx]
-            )
+        return ([0] * (MAX_WORD_LEN - word_len) + self.item_list[idx], self.labels[idx])
 
 
 def train_collate_fn(x):
@@ -35,8 +32,7 @@ class InferenceDataset(Dataset):
         return len(self.item_list)
 
     def __getitem__(self, idx):
-        return [0] * (MAX_WORD_LEN - 
-                      len(self.item_list[idx])) + self.item_list[idx]
+        return [0] * (MAX_WORD_LEN - len(self.item_list[idx])) + self.item_list[idx]
 
 
 def inference_collate_fn(x):
@@ -48,6 +44,14 @@ def inference_collate_fn(x):
 def get_item_list(word):
     item = [char2id[ch] for ch in word if ch in char2id]
     return item
+
+
+def get_pair_list(word):
+    pairs = []
+    for i in range(0, len(word), 2):
+        pair = word[i:i + 2]
+        pairs.append(pair2id[pair])
+    return pairs
 
 
 def get_item_labels(word):
