@@ -33,6 +33,5 @@ class BiLSTM52(nn.Module):
         items = batch["items"]
         embedded = self.embedding(items)
         output, (hidden, cell_state) = self.lstm(embedded)
-        print(hidden.size())
         logits = self.classifier(hidden[-1, :, :])
         return logits
