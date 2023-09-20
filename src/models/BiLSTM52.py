@@ -1,7 +1,6 @@
 import torch.nn as nn
-import torch
 
-from settings import VOCAB_SIZE, MAX_WORD_LEN
+from settings import VOCAB_SIZE
 
 
 class BiLSTM52(nn.Module):
@@ -31,8 +30,9 @@ class BiLSTM52(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, batch):
-        items = batch['items']
+        items = batch["items"]
         embedded = self.embedding(items)
         output, (hidden, cell_state) = self.lstm(embedded)
-        logits = self.fc(hidden[-1, :, :])
+        print(hidden.size())
+        logits = self.classifier(hidden[-1, :, :])
         return logits
