@@ -7,10 +7,10 @@ class BiLSTM52(nn.Module):
     def __init__(
         self,
         vocab_size=VOCAB_SIZE,
-        embedding_dim=128,
-        hidden_dim=128,
+        embedding_dim=64,
+        hidden_dim=64,
         output_dim=15,
-        n_layers=4,
+        n_layers=6,
         bidirectional=True,
         dropout=0.1,
     ):

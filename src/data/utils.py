@@ -5,8 +5,8 @@ from settings import MAX_WORD_LEN, vowels, char2id, pair2id
 
 
 class TrainDataset(Dataset):
-    def __init__(self, words):
-        self.item_list = list(map(get_item_list, words))
+    def __init__(self, words, tokenizer):
+        self.item_list = list(map(tokenizer, words))
         self.labels = list(map(get_item_labels, words))
 
     def __len__(self):
@@ -25,8 +25,8 @@ def train_collate_fn(x):
 
 
 class InferenceDataset(Dataset):
-    def __init__(self, words):
-        self.item_list = list(map(get_item_list, words))
+    def __init__(self, words, tokenizer):
+        self.item_list = list(map(tokenizer, words))
 
     def __len__(self):
         return len(self.item_list)
@@ -49,8 +49,9 @@ def get_item_list(word):
 def get_pair_list(word):
     pairs = []
     for i in range(0, len(word), 2):
-        pair = word[i:i + 2]
-        pairs.append(pair2id[pair])
+        pair = word.replace('^', '')[i:i + 2]
+        if pair in pair2id:
+            pairs.append(pair2id[pair])
     return pairs
 
 

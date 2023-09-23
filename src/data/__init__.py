@@ -5,5 +5,6 @@ from .utils import (
     inference_collate_fn,
     get_item_list,
     get_item_labels,
+    get_pair_list,
     read_words_from_file,
 )

@@ -40,7 +40,7 @@ class AttnLSTM52(nn.Module):
         seq = add_cls(items)
         embedded = self.embedding(seq)
         output, (hidden, cell_state) = self.lstm(embedded)
-        mask = torch.ones(seq.size()[0], 1, seq.size()[1], seq.size()[1])
+        mask = torch.ones(seq.size()[0], 1, seq.size()[1], seq.size()[1]).to('cuda')
         mask[:, :, -1, :] = 0
         attn_out = self.attention(output, mask)
         logits = self.classifier(attn_out[:, -1, :])
@@ -48,5 +48,5 @@ class AttnLSTM52(nn.Module):
 
 
 def add_cls(items, vocab_size=VOCAB_SIZE):
-    cls_tensor = torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1)
+    cls_tensor = torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1).to('cuda')
     return torch.cat([items, cls_tensor], dim=1)

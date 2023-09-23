@@ -13,7 +13,7 @@ torch.manual_seed(RANDOM_STATE)
 torch.cuda.manual_seed_all(RANDOM_STATE)
 
 
-def train_epoch(model, data_loader, loss_function, optimizer, device):
+def train_epoch(model, data_loader, loss_function, optimizer, scheduler, device):
     model.to(device)
     model.train()
     total_loss = 0
@@ -37,6 +37,9 @@ def train_epoch(model, data_loader, loss_function, optimizer, device):
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
+    #For every epoch, not batch
+    scheduler.step()
+        
     preds = torch.cat(preds, dim=0)
     targets = torch.cat(targets, dim=0)
     acc = (targets == preds).sum() / preds.shape[0]
@@ -77,6 +80,7 @@ def single_model(
     val_loader,
     loss_function,
     optimizer,
+    scheduler,
     device=torch.device("cpu"),
     epochs: int = 8,
     start_epoch=0,
@@ -86,7 +90,7 @@ def single_model(
     for epoch_i in range(0, epochs):
         if epoch_i >= start_epoch:
             train_metrics = train_epoch(
-                model, train_loader, loss_function, optimizer, device
+                model, train_loader, loss_function, optimizer, scheduler, device
             )
             eval_metrics = eval_epoch(model, val_loader, loss_function, device)
             print("EPOCH", epoch_i)
@@ -100,8 +104,10 @@ def train_model_early_stopping(
     val_loader,
     loss_function,
     optimizer,
+    scheduler,
     device=torch.device("cpu"),
     early_stopping: int = 2,
+    eps: int = 1e-3,
 ):
     loss_function.to(device)
     model.to(device)
@@ -110,14 +116,15 @@ def train_model_early_stopping(
     epoch = 0
     while es > 0:
         train_metrics = train_epoch(
-            model, train_loader, loss_function, optimizer, device
+            model, train_loader, loss_function, optimizer, scheduler, device
         )
         eval_metrics = eval_epoch(model, val_loader, loss_function, device)
+        epoch += 1
         print("EPOCH", epoch)
         print(train_metrics)
         print(eval_metrics)
         acc = eval_metrics["Eval Accuracy"]
-        if acc > max_acc:
+        if acc > max_acc + eps:
             best_model = copy.deepcopy(model)
             es = early_stopping
             max_acc = acc
