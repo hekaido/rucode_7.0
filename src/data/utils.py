@@ -49,7 +49,7 @@ def get_item_list(word):
 def get_pair_list(word):
     pairs = []
     for i in range(0, len(word), 2):
-        pair = word.replace('^', '')[i:i + 2]
+        pair = word.replace("^", "")[i:i + 2]
         if pair in pair2id:
             pairs.append(pair2id[pair])
     return pairs
@@ -68,3 +68,24 @@ def read_words_from_file(file_path):
     except FileNotFoundError:
         print("Файл не найден")
         return []
+
+
+def new_insert_carot(w, ks):
+    vowels = ["а", "е", "ё", "и", "о", "у", "ы", "э", "ю", "я"]
+    words = []
+    for k in ks:
+        count = 0
+        w1 = ""
+
+        for char in w:
+            w1 += char
+
+            if char.lower() in vowels:
+                count += 1
+                if count == k:
+                    w1 += "^"
+        words.append(w1)
+
+    for w1 in words:
+        if "^" in w1:
+            return w1

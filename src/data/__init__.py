@@ -7,4 +7,5 @@ from .utils import (
     get_item_labels,
     get_pair_list,
     read_words_from_file,
+    new_insert_carot
 )
