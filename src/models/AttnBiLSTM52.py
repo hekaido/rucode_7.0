@@ -12,7 +12,7 @@ class AttnBiLSTM52(nn.Module):
         embedding_dim=128,
         hidden_dim=128,
         output_dim=15,
-        n_layers=4,
+        n_layers=3,
         attn_heads=1,
         dropout=0.1,
         device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
@@ -29,7 +29,7 @@ class AttnBiLSTM52(nn.Module):
             batch_first=True,
         )
         self.attention = TransformerBlock(
-            hidden=2 * hidden_dim,
+            hidden=hidden_dim,
             attn_heads=attn_heads,
             feed_forward_hidden=hidden_dim,
             dropout=dropout,
@@ -38,7 +38,7 @@ class AttnBiLSTM52(nn.Module):
 
     def forward(self, batch):
         items = batch["items"]
-        seq = add_cls(items, self.device)
+        seq = add_cls(items, VOCAB_SIZE, self.device)
         embedded = self.embedding(seq)
         output, (hidden, cell_state) = self.lstm(embedded)
         mask = torch.ones(seq.size()[0], 1, seq.size()[1], seq.size()[1]).to(
@@ -50,7 +50,7 @@ class AttnBiLSTM52(nn.Module):
         return logits
 
 
-def add_cls(items, vocab_size=VOCAB_SIZE, device=torch.cpu()):
+def add_cls(items, vocab_size=VOCAB_SIZE, device='cpu'):
     cls_tensor = (
         torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1).to(device)
     )
