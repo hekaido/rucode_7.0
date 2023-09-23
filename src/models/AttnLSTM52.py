@@ -38,7 +38,7 @@ class AttnLSTM52(nn.Module):
 
     def forward(self, batch):
         items = batch["items"]
-        seq = add_cls(items, self.device)
+        seq = add_cls(items, VOCAB_SIZE, self.device)
         embedded = self.embedding(seq)
         output, (hidden, cell_state) = self.lstm(embedded)
         mask = torch.ones(seq.size()[0], 1, seq.size()[1], seq.size()[1]).to(
@@ -50,7 +50,7 @@ class AttnLSTM52(nn.Module):
         return logits
 
 
-def add_cls(items, vocab_size=VOCAB_SIZE, device=torch.cpu()):
+def add_cls(items, vocab_size=VOCAB_SIZE, device='cpu'):
     cls_tensor = (
         torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1).to(device)
     )
