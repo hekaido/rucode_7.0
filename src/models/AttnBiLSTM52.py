@@ -5,7 +5,7 @@ from settings import VOCAB_SIZE
 from .transformer import TransformerBlock
 
 
-class AttnLSTM52(nn.Module):
+class AttnBiLSTM52(nn.Module):
     def __init__(
         self,
         vocab_size=VOCAB_SIZE,
@@ -17,19 +17,19 @@ class AttnLSTM52(nn.Module):
         dropout=0.1,
         device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     ):
-        super(AttnLSTM52, self).__init__()
+        super(AttnBiLSTM52, self).__init__()
         self.device = device
         self.embedding = nn.Embedding(vocab_size + 2, embedding_dim, padding_idx=0)
         self.lstm = nn.LSTM(
             embedding_dim,
             hidden_dim,
             num_layers=n_layers,
-            bidirectional=False,
+            bidirectional=True,
             dropout=dropout,
             batch_first=True,
         )
         self.attention = TransformerBlock(
-            hidden=hidden_dim,
+            hidden=2 * hidden_dim,
             attn_heads=attn_heads,
             feed_forward_hidden=hidden_dim,
             dropout=dropout,

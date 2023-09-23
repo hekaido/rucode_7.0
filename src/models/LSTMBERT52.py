@@ -5,7 +5,7 @@ from settings import VOCAB_SIZE
 from .transformer import TransformerBlock
 
 
-class AttnLSTM52(nn.Module):
+class LSTMBERT52(nn.Module):
     def __init__(
         self,
         vocab_size=VOCAB_SIZE,
@@ -13,11 +13,12 @@ class AttnLSTM52(nn.Module):
         hidden_dim=128,
         output_dim=15,
         n_layers=4,
-        attn_heads=1,
+        attn_heads=4,
+        n_attn_layers=4,
         dropout=0.1,
         device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     ):
-        super(AttnLSTM52, self).__init__()
+        super(LSTMBERT52, self).__init__()
         self.device = device
         self.embedding = nn.Embedding(vocab_size + 2, embedding_dim, padding_idx=0)
         self.lstm = nn.LSTM(
@@ -28,11 +29,11 @@ class AttnLSTM52(nn.Module):
             dropout=dropout,
             batch_first=True,
         )
-        self.attention = TransformerBlock(
-            hidden=hidden_dim,
-            attn_heads=attn_heads,
-            feed_forward_hidden=hidden_dim,
-            dropout=dropout,
+        self.transformer_blocks = nn.ModuleList(
+            [
+                TransformerBlock(hidden_dim, attn_heads, hidden_dim, dropout)
+                for _ in range(n_attn_layers)
+            ]
         )
         self.classifier = nn.Linear(hidden_dim, output_dim)
 
@@ -45,8 +46,9 @@ class AttnLSTM52(nn.Module):
             self.device
         )
         mask[:, :, -1, :] = 0
-        attn_out = self.attention(output, mask)
-        logits = self.classifier(attn_out[:, -1, :])
+        for transformer in self.transformer_blocks:
+            output = transformer.forward(output, mask)
+        logits = self.classifier(output[:, -1, :])
         return logits
 
 
