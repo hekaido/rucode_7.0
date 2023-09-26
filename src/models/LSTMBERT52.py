@@ -37,6 +37,10 @@ class LSTMBERT52(nn.Module):
         )
         self.classifier = nn.Linear(hidden_dim, output_dim)
 
+        self.lstm.apply(weight_init)
+        self.transformer_blocks.apply(weight_init)
+        self.classifier.apply(self.weight_init)
+
     def forward(self, batch):
         items = batch["items"]
         seq = add_cls(items, self.device)
@@ -57,3 +61,9 @@ def add_cls(items, vocab_size=VOCAB_SIZE, device=torch.cpu()):
         torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1).to(device)
     )
     return torch.cat([items, cls_tensor], dim=1)
+
+
+def weight_init(m):
+    if isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight)
+        m.bias.data.zero_()
