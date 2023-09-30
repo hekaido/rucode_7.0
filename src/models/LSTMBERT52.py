@@ -35,14 +35,16 @@ class LSTMBERT52(nn.Module):
                 for _ in range(n_attn_layers)
             ]
         )
+        self.output_dim = output_dim
         self.classifier = nn.Linear(hidden_dim, output_dim)
 
+        self.embedding.apply(weight_init)
         self.lstm.apply(weight_init)
         self.transformer_blocks.apply(weight_init)
-        self.classifier.apply(self.weight_init)
+        self.classifier.apply(weight_init)
 
-    def forward(self, batch):
-        items = batch["items"]
+    def forward(self, batch, key="items"):
+        items = batch[key]
         seq = add_cls(items, VOCAB_SIZE, self.device)
         embedded = self.embedding(seq)
         output, (hidden, cell_state) = self.lstm(embedded)
@@ -55,8 +57,15 @@ class LSTMBERT52(nn.Module):
         logits = self.classifier(output[:, -1, :])
         return logits
 
+    def tta_forward(self, batch, keys=["items", "normals"]):
+        logits = torch.zeros(batch[keys[0]].size()[0], self.output_dim).to(self.device)
+        for key in keys:
+            logits += self.forward(batch, key)
 
-def add_cls(items, vocab_size=VOCAB_SIZE, device='cpu'):
+        return logits
+
+
+def add_cls(items, vocab_size=VOCAB_SIZE, device="cpu"):
     cls_tensor = (
         torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1).to(device)
     )

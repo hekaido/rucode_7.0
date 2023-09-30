@@ -10,8 +10,8 @@ class AttnBiLSTM52(nn.Module):
         self,
         vocab_size=VOCAB_SIZE,
         embedding_dim=128,
-        hidden_dim=128,
-        output_dim=15,
+        hidden_dim=96,
+        output_dim=13,
         n_layers=3,
         attn_heads=1,
         dropout=0.1,
@@ -29,12 +29,17 @@ class AttnBiLSTM52(nn.Module):
             batch_first=True,
         )
         self.attention = TransformerBlock(
-            hidden=hidden_dim,
+            hidden=2 * hidden_dim,
             attn_heads=attn_heads,
-            feed_forward_hidden=hidden_dim,
+            feed_forward_hidden=2 * hidden_dim,
             dropout=dropout,
         )
-        self.classifier = nn.Linear(hidden_dim, output_dim)
+        self.classifier = nn.Linear(2 * hidden_dim, output_dim)
+        
+        self.embedding.apply(weight_init)
+        self.lstm.apply(weight_init)
+        self.attention.apply(weight_init)
+        self.classifier.apply(weight_init)
 
     def forward(self, batch):
         items = batch["items"]
@@ -55,3 +60,8 @@ def add_cls(items, vocab_size=VOCAB_SIZE, device='cpu'):
         torch.tensor([vocab_size + 1] * items.size()[0]).reshape(-1, 1).to(device)
     )
     return torch.cat([items, cls_tensor], dim=1)
+
+def weight_init(m):
+    if isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight)
+        m.bias.data.zero_()
