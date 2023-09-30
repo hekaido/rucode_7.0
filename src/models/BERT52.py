@@ -4,7 +4,7 @@ from transformers import BertConfig, BertForSequenceClassification
 from settings import VOCAB_SIZE, MAX_WORD_LEN
 
 
-class Model52(nn.Module):
+class BERT52(nn.Module):
     def __init__(
         self,
         hidden_dim=128,

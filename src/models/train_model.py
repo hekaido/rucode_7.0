@@ -37,9 +37,8 @@ def train_epoch(model, data_loader, loss_function, optimizer, scheduler, device)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
-    #For every epoch, not batch
     scheduler.step()
-        
+
     preds = torch.cat(preds, dim=0)
     targets = torch.cat(targets, dim=0)
     acc = (targets == preds).sum() / preds.shape[0]
