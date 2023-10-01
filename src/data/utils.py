@@ -1,5 +1,9 @@
+from itertools import starmap
+from functools import partial
+
 import torch
 from torch.utils.data import Dataset
+from pymorphy2 import MorphAnalyzer
 
 from settings import MAX_WORD_LEN, vowels, char2id, pair2id
 
@@ -57,7 +61,7 @@ def get_pair_list(word):
 
 def get_item_labels(word):
     vow_word = [ch for ch in word if ch in vowels]
-    return vow_word.index("^")
+    return vow_word.index("^") - 1
 
 
 def read_words_from_file(file_path):
@@ -89,3 +93,116 @@ def new_insert_carot(w, ks):
     for w1 in words:
         if "^" in w1:
             return w1
+
+
+class TrainDataset52(Dataset):
+    def __init__(self, words, norm_words, tokenizer):
+        morph = MorphAnalyzer()
+        self.item_list = list(map(tokenizer, words))
+        self.norm_item_list = list(map(tokenizer, norm_words))
+        self.labels = list(map(get_item_labels, words))
+        self.features = list(
+            starmap(partial(get_features_list, morph=morph), zip(words, norm_words))
+        )
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        word_len = len(self.item_list[idx])
+        vowels_num = self.features[idx][0]
+        is_norm = self.features[idx][1]
+        part = self.features[idx][2]
+        return (
+            [0] * (MAX_WORD_LEN - word_len) + self.item_list[idx],
+            self.labels[idx],
+            vowels_num,
+            is_norm,
+            part
+        )
+
+
+def train_collate_fn52(x):
+    item_list, labels, vowels_num, is_norm, part = zip(*x)
+    item_tensor = torch.tensor(item_list)
+    labels_tensor = torch.tensor(labels)
+    vowels_tensor = torch.tensor(vowels_num)
+    norm_tensor = torch.tensor(is_norm)
+    part_tensor = torch.tensor(part)
+    return {
+        "items": item_tensor,
+        "labels": labels_tensor,
+        "vowels_num": vowels_tensor,
+        "is_norm": norm_tensor,
+        "part": part_tensor,
+    }
+
+
+class InferenceDataset52(Dataset):
+    def __init__(self, words, norm_words, tokenizer):
+        morph = MorphAnalyzer()
+        self.item_list = list(map(tokenizer, words))
+        self.norm_item_list = list(map(tokenizer, norm_words))
+        self.features = list(
+            starmap(partial(get_features_list, morph=morph), zip(words, norm_words))
+        )
+
+    def __len__(self):
+        return len(self.item_list)
+
+    def __getitem__(self, idx):
+        word_len = len(self.item_list[idx])
+        vowels_num = self.features[idx][0]
+        is_norm = self.features[idx][1]
+        part = self.features[idx][2]
+        return (
+            [0] * (MAX_WORD_LEN - word_len) + self.item_list[idx],
+            vowels_num,
+            is_norm,
+            part,
+        )
+
+
+def inference_collate_fn52(x):
+    item_list, vowels_num, is_norm, part = zip(*x)
+    item_tensor = torch.tensor(item_list)
+    vowels_tensor = torch.tensor(vowels_num)
+    norm_tensor = torch.tensor(is_norm)
+    part_tensor = torch.tensor(part)
+    return {
+        "items": item_tensor,
+        "vowels_num": vowels_tensor,
+        "is_norm": norm_tensor,
+        "part": part_tensor,
+    }
+
+
+def get_features_list(word, norm_word, morph):
+    vowel = ["а", "е", "ё", "и", "о", "у", "ы", "э", "ю", "я"]
+    vowels_number = len([ch for ch in word if ch in vowel]) - 1
+    is_norm = 1 if word == norm_word else 0
+    part = define_part_of_speech(norm_word, morph)
+    return [vowels_number, is_norm, part]
+
+
+def define_part_of_speech(normal_word, morph):
+    tags = morph.parse(normal_word)[0].tag
+
+    if "VERB" in tags:
+        return 0
+    elif "NOUN" in tags:
+        return 1
+    elif "ADJF" in tags or "ADJS" in tags:
+        return 2
+    elif "ADVB" in tags:
+        return 3
+    elif "PRTF" in tags or "PRTS" in tags:
+        return 4
+    elif "NPRO" in tags:
+        return 5
+    elif "GRND" in tags:
+        return 6
+    elif "NUMR" in tags:
+        return 7
+    else:
+        return 8
