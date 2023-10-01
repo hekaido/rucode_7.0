@@ -74,5 +74,5 @@ def add_cls(items, vocab_size=VOCAB_SIZE, device="cpu"):
 
 def weight_init(m):
     if isinstance(m, nn.Linear):
-        nn.init.kaiming_normal_(m.weight)
+        nn.init.xavier_normal_(m.weight)
         m.bias.data.zero_()
