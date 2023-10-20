@@ -1,7 +1,7 @@
 rucode_7.0
 ==============================
 
-our solution on rucode 7. championship0
+Our solution to the problem of RuCode 7.0
 
 Project Organization
 ------------
