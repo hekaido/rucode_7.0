@@ -1,7 +1,7 @@
 rucode_7.0
 ==============================
 
-our solution on rucode 7. championship0
+Our solution to the problem of RuCode 7.0
 
 Project Organization
 ------------
@@ -41,5 +41,3 @@ Project Organization
 
 
 --------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
